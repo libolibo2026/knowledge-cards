@@ -5,4 +5,4 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "knowledge-cards-db"
-database_id = "在这里粘贴你的database_id"
+database_id = "969f1f85-86f5-42cb-9fab-1e6a9462d6bf"
