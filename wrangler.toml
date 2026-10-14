@@ -1,0 +1,8 @@
+name = "knowledge-cards"
+compatibility_date = "2026-04-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "knowledge-cards-db"
+database_id = "在这里粘贴你的database_id"
