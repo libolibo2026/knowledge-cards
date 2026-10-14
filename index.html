@@ -789,7 +789,15 @@ const API = {
    全局状态
    ========================================================= */
 const PAGE_SIZE = 50;
-const state = { section: 'business', cat: '全部', q: '', list: [], index: -1, page: 1 };
+const state = {
+  section: 'business',
+  cat: '全部',
+  q: '',
+  list: [],       /* 当前页显示的卡片（网格用） */
+  allList: [],    /* 当前筛选条件下的全部卡片（弹窗用） */
+  index: -1,      /* 弹窗中卡片在 allList 中的全局位置 */
+  page: 1
+};
 let SECTIONS = [];
 let CARDS = [];
 const cardCache = new Map();
@@ -840,37 +848,31 @@ function renderFilters() {
 }
 
 /* =========================================================
-   渲染：卡片网格 + 分页
+   计算筛选结果 + 分页
    ========================================================= */
-function render() {
-  if (!CARDS.length) {
-    const s = SECTIONS.find(x => x.slug === state.section);
-    grid.innerHTML = '';
-    grid.style.display = 'none';
-    paginationEl.innerHTML = '';
-    emptyTitle.textContent = `「${s ? s.name : ''}」内容筹备中`;
-    emptyDesc.textContent = '这个板块的卡片正在整理中，敬请期待。';
-    emptyEl.classList.add('show');
-    state.list = [];
-    return;
-  }
-
+function filterCards() {
   const q = state.q.trim().toLowerCase();
-  const filtered = CARDS.filter(c => {
+  return CARDS.filter(c => {
     const matchCat = state.cat === '全部' || c.category === state.cat;
     const hay = (c.title + c.summary + c.category + (c.points || []).map(p => p.t + p.d).join('')).toLowerCase();
     return matchCat && (!q || hay.includes(q));
   });
+}
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  if (state.page > totalPages) state.page = 1;
-  if (state.page < 1) state.page = 1;
+function computePages() {
+  return Math.max(1, Math.ceil(state.allList.length / PAGE_SIZE));
+}
 
+function currentPageSlice() {
   const start = (state.page - 1) * PAGE_SIZE;
-  const list = filtered.slice(start, start + PAGE_SIZE);
+  return state.allList.slice(start, start + PAGE_SIZE);
+}
 
-  state.list = list;
-
+/* =========================================================
+   渲染：网格 + 分页
+   ========================================================= */
+function renderGrid() {
+  const list = state.list;
   grid.innerHTML = list.map((c, i) => `
     <div class="card-wrap" style="animation-delay:${Math.min(i * 40, 320)}ms">
       <article class="card" data-cat="${c.category}" data-idx="${i}">
@@ -885,20 +887,10 @@ function render() {
       </article>
     </div>
   `).join('');
-
-  const isEmpty = list.length === 0;
-  grid.style.display = isEmpty ? 'none' : 'grid';
-  emptyEl.classList.toggle('show', isEmpty);
-  if (isEmpty) {
-    emptyTitle.textContent = '没有找到匹配的卡片';
-    emptyDesc.textContent = '换个关键词，或者切换一下分类试试。';
-    paginationEl.innerHTML = '';
-  } else {
-    renderPagination(totalPages, filtered.length);
-  }
 }
 
-function renderPagination(totalPages, totalCount) {
+function renderPagination() {
+  const totalPages = computePages();
   if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
 
   const pages = getPageNumbers(state.page, totalPages);
@@ -912,7 +904,7 @@ function renderPagination(totalPages, totalCount) {
     }
   });
   html += `<button class="page-btn" data-page="next" ${state.page === totalPages ? 'disabled' : ''}>下一页</button>`;
-  html += `<span class="page-info">共 ${totalCount} 条 · 第 ${state.page}/${totalPages} 页</span>`;
+  html += `<span class="page-info">共 ${state.allList.length} 条 · 第 ${state.page}/${totalPages} 页</span>`;
   paginationEl.innerHTML = html;
 }
 
@@ -927,6 +919,61 @@ function getPageNumbers(current, total) {
     }
   }
   return range;
+}
+
+/* =========================================================
+   主渲染
+   ========================================================= */
+function render() {
+  if (!CARDS.length) {
+    const s = SECTIONS.find(x => x.slug === state.section);
+    grid.innerHTML = '';
+    grid.style.display = 'none';
+    paginationEl.innerHTML = '';
+    emptyTitle.textContent = `「${s ? s.name : ''}」内容筹备中`;
+    emptyDesc.textContent = '这个板块的卡片正在整理中，敬请期待。';
+    emptyEl.classList.add('show');
+    state.list = [];
+    state.allList = [];
+    return;
+  }
+
+  state.allList = filterCards();
+  const totalPages = computePages();
+  if (state.page > totalPages) state.page = 1;
+  if (state.page < 1) state.page = 1;
+
+  state.list = currentPageSlice();
+
+  const isEmpty = state.list.length === 0;
+  grid.style.display = isEmpty ? 'none' : 'grid';
+
+  if (isEmpty) {
+    grid.innerHTML = '';
+    paginationEl.innerHTML = '';
+    emptyTitle.textContent = '没有找到匹配的卡片';
+    emptyDesc.textContent = '换个关键词，或者切换一下分类试试。';
+    emptyEl.classList.add('show');
+    return;
+  }
+
+  emptyEl.classList.remove('show');
+  renderGrid();
+  renderPagination();
+}
+
+/* =========================================================
+   跳转到指定页（不改变筛选条件）
+   ========================================================= */
+function goToPage(p, scroll) {
+  const totalPages = computePages();
+  if (p < 1) p = 1;
+  if (p > totalPages) p = totalPages;
+  state.page = p;
+  state.list = currentPageSlice();
+  renderGrid();
+  renderPagination();
+  if (scroll) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* =========================================================
@@ -1000,16 +1047,13 @@ searchInput.addEventListener('input', e => {
   render();
 });
 
-/* 分页点击 */
 paginationEl.addEventListener('click', e => {
   const btn = e.target.closest('.page-btn');
   if (!btn || btn.disabled) return;
   const p = btn.dataset.page;
-  if (p === 'prev') state.page = Math.max(1, state.page - 1);
-  else if (p === 'next') state.page = state.page + 1;
-  else state.page = Number(p);
-  render();
-  grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (p === 'prev') goToPage(state.page - 1, true);
+  else if (p === 'next') goToPage(state.page + 1, true);
+  else goToPage(Number(p), true);
 });
 
 /* =========================================================
@@ -1028,11 +1072,19 @@ backToTop.addEventListener('click', () => {
    ========================================================= */
 let lastFocused = null;
 
-function openModal(index) {
-  const card = state.list[index];
+/* globalIdx 是卡片在 state.allList 中的位置 */
+function openModal(globalIdx) {
+  const card = state.allList[globalIdx];
   if (!card) return;
-  state.index = index;
-  const total = state.list.length;
+
+  state.index = globalIdx;
+  const total = state.allList.length;
+
+  /* 主页网格跟随同步到该卡片所在的页（不滚动） */
+  const targetPage = Math.floor(globalIdx / PAGE_SIZE) + 1;
+  if (targetPage !== state.page) {
+    goToPage(targetPage, false);
+  }
 
   modalBody.innerHTML = `
     <div class="m-head" data-cat="${card.category}">
@@ -1052,13 +1104,13 @@ function openModal(index) {
       `).join('')}
     </ul>
     <div class="modal-nav">
-      <button data-nav="prev" ${index === 0 ? 'disabled' : ''} aria-label="上一张">
+      <button data-nav="prev" ${globalIdx === 0 ? 'disabled' : ''} aria-label="上一张">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 5l-7 7 7 7"/>
         </svg>
       </button>
-      <span class="modal-pos">${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
-      <button data-nav="next" ${index === total - 1 ? 'disabled' : ''} aria-label="下一张">
+      <span class="modal-pos">${String(globalIdx + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>
+      <button data-nav="next" ${globalIdx === total - 1 ? 'disabled' : ''} aria-label="下一张">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 5l7 7-7 7"/>
         </svg>
@@ -1071,7 +1123,6 @@ function openModal(index) {
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    /* 推入一条历史记录，用于捕获移动端滑动返回 */
     try {
       if (!history.state || !history.state.ftModal) {
         history.pushState({ ftModal: true }, '');
@@ -1093,7 +1144,6 @@ function closeModal() {
   if (lastFocused) lastFocused.focus();
 }
 
-/* 主动关闭：先回退历史，由 popstate 统一收尾 */
 function requestClose() {
   if (history.state && history.state.ftModal) {
     history.back();
@@ -1103,12 +1153,15 @@ function requestClose() {
 }
 
 function goPrev() { if (state.index > 0) openModal(state.index - 1); }
-function goNext() { if (state.index < state.list.length - 1) openModal(state.index + 1); }
+function goNext() { if (state.index < state.allList.length - 1) openModal(state.index + 1); }
 
+/* 网格点击：把「页内位置」换算成「全局位置」 */
 grid.addEventListener('click', e => {
   const card = e.target.closest('.card');
   if (!card) return;
-  openModal(Number(card.dataset.idx));
+  const pageIdx = Number(card.dataset.idx);
+  const globalIdx = (state.page - 1) * PAGE_SIZE + pageIdx;
+  openModal(globalIdx);
 });
 
 modal.addEventListener('click', e => {
@@ -1127,14 +1180,12 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
 });
 
-/* 移动端滑动返回 / 浏览器后退键：只关闭弹窗 */
 window.addEventListener('popstate', () => {
   if (modal.classList.contains('open')) {
     closeModal();
   }
 });
 
-/* 弹窗内滚动超过 200px 显示回到顶部 */
 modalPanel.addEventListener('scroll', () => {
   modalTopBtn.classList.toggle('show', modalPanel.scrollTop > 200);
 });
