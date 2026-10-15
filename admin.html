@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方塘后台 · 卡片管理</title>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('ft-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root,
+  [data-theme="light"] {
+    --bg:#F5F2EC; --bg-soft:#EDE8DF; --card:#FFFFFF;
+    --ink:#1A1A18; --ink-2:#6E6A62; --ink-3:#A8A298;
+    --line:#E7E1D7; --accent:#1F5C4A; --accent-soft:rgba(31,92,74,.08);
+    --glow:rgba(31,92,74,.07);
+    --shadow-card:0 1px 2px rgba(26,26,24,.05),0 4px 10px -3px rgba(26,26,24,.07),0 14px 30px -10px rgba(26,26,24,.13);
+    --shadow-sm:0 2px 8px rgba(26,26,24,.07);
+    --card-inset: inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  [data-theme="dark"] {
+    --bg:#0F1218; --bg-soft:#161A21; --card:#1A1F27;
+    --ink:#ECE9E3; --ink-2:#9C9890; --ink-3:#67635D;
+    --line:#272C35; --accent:#6FC8A8; --accent-soft:rgba(111,200,168,.10);
+    --glow:rgba(111,200,168,.07);
+    --shadow-card:0 1px 2px rgba(0,0,0,.45),0 6px 14px -4px rgba(0,0,0,.5),0 18px 38px -14px rgba(0,0,0,.65);
+    --shadow-sm:0 2px 8px rgba(0,0,0,.4);
+    --card-inset: inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  [data-theme="eye"] {
+    --bg:#D8E9D1; --bg-soft:#CFE2C7; --card:#F3FAEF;
+    --ink:#22301E; --ink-2:#586A50; --ink-3:#8DA183;
+    --line:#BED3B5; --accent:#2E6B3C; --accent-soft:rgba(46,107,60,.09);
+    --glow:rgba(46,107,60,.09);
+    --shadow-card:0 1px 2px rgba(34,48,30,.06),0 4px 10px -3px rgba(34,48,30,.09),0 14px 30px -10px rgba(34,48,30,.16);
+    --shadow-sm:0 2px 8px rgba(34,48,30,.09);
+    --card-inset: inset 0 1px 0 rgba(255,255,255,.85);
+  }
+
+  html, body {
+    background: var(--bg);
+    background-image: radial-gradient(circle at 15% -5%, var(--glow), transparent 55%);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ 顶部 ============ */
+  .top {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner {
+    max-width: 960px; margin: 0 auto;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 15px;
+    color: var(--ink); text-decoration: none;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--accent); color: var(--bg);
+    display: grid; place-items: center;
+    font-size: 15px; font-weight: 700;
+  }
+  .brand-sub { font-size: 12px; color: var(--ink-3); margin-left: 4px; }
+  .top-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--card); color: var(--ink-2);
+    text-decoration: none; font-size: 13px; font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer; font-family: inherit;
+  }
+  .link-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ============ 主体 ============ */
+  .main { max-width: 960px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ============ 登录卡 ============ */
+  .login-card {
+    max-width: 420px; margin: 80px auto;
+    background: var(--card); background-image: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0));
+    border: 1px solid var(--line); border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow-card), var(--card-inset);
+    text-align: center;
+  }
+  [data-theme="dark"] .login-card { background-image: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0)); }
+  .login-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .login-card p { font-size: 13px; color: var(--ink-3); margin-bottom: 24px; }
+  .login-card input {
+    width: 100%; padding: 12px 14px;
+    border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink);
+    font-family: inherit; font-size: 15px;
+    outline: none; text-align: center;
+    margin-bottom: 14px;
+  }
+  .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .login-card button {
+    width: 100%; padding: 12px 14px;
+    border-radius: 12px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    cursor: pointer;
+  }
+  .login-card button:hover { opacity: .9; }
+  .login-msg { font-size: 13px; margin-top: 12px; min-height: 20px; }
+  .login-msg.err { color: #C0392B; }
+  .login-msg.ok  { color: var(--accent); }
+
+  /* ============ 标签切换 ============ */
+  .tabs {
+    display: flex; gap: 6px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 26px;
+  }
+  .tab {
+    padding: 10px 18px 14px;
+    border: 0; background: transparent;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    color: var(--ink-3); cursor: pointer;
+    position: relative;
+  }
+  .tab.active { color: var(--ink); }
+  .tab.active::after {
+    content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px;
+    height: 2px; border-radius: 2px; background: var(--accent);
+  }
+
+  /* ============ 表单 ============ */
+  .form-wrap {
+    background: var(--card);
+    border: 1px solid var(--line); border-radius: 20px;
+    padding: 28px 26px;
+    box-shadow: var(--shadow-card), var(--card-inset);
+  }
+  .field { margin-bottom: 22px; }
+  .field label {
+    display: block; font-size: 13px; font-weight: 700;
+    color: var(--ink-2); margin-bottom: 8px;
+  }
+  .field label .req { color: #C0392B; margin-left: 4px; }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field textarea,
+  .field select {
+    width: 100%; padding: 11px 14px;
+    border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink);
+    font-family: inherit; font-size: 14.5px;
+    outline: none; resize: vertical;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .field textarea { min-height: 70px; line-height: 1.6; }
+  .field-row { display: flex; gap: 14px; }
+  .field-row .field { flex: 1; }
+  .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+
+  /* ============ 要点列表 ============ */
+  .points-list { display: flex; flex-direction: column; gap: 10px; }
+  .point-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 14px;
+    border: 1px dashed var(--line); border-radius: 12px;
+    background: var(--bg-soft);
+  }
+  .point-row .num {
+    flex-shrink: 0; width: 24px; height: 24px; margin-top: 8px;
+    border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+    font-size: 12px; font-weight: 700;
+    display: grid; place-items: center;
+  }
+  .point-row .body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .point-row input[type="text"] {
+    padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    font-family: inherit; font-size: 14px; outline: none;
+  }
+  .point-row textarea {
+    min-height: 48px; padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    font-family: inherit; font-size: 13.5px; outline: none; resize: vertical;
+  }
+  .point-row input:focus, .point-row textarea:focus { border-color: var(--accent); }
+  .point-remove {
+    flex-shrink: 0; width: 28px; height: 28px; margin-top: 6px;
+    border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink-3); cursor: pointer;
+    font-size: 16px; line-height: 1;
+  }
+  .point-remove:hover { color: #C0392B; border-color: #C0392B; }
+
+  /* ============ 按钮 ============ */
+  .btn-primary {
+    padding: 12px 26px; border-radius: 12px;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover { opacity: .9; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 12px 22px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--ink-3); color: var(--ink); }
+  .btn-mini {
+    padding: 5px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-mini:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-mini.danger:hover { border-color: #C0392B; color: #C0392B; }
+
+  .form-actions {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 28px; padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+  .form-msg { font-size: 13.5px; margin-left: auto; font-weight: 600; }
+  .form-msg.ok  { color: var(--accent); }
+  .form-msg.err { color: #C0392B; }
+
+  /* ============ 管理列表 ============ */
+  .list-toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .list-toolbar input,
+  .list-toolbar select {
+    padding: 9px 13px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    font-family: inherit; font-size: 14px; outline: none;
+  }
+  .list-toolbar input { flex: 1; min-width: 180px; }
+  .list-toolbar input:focus, .list-toolbar select:focus { border-color: var(--accent); }
+
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 18px;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-item .no {
+    flex-shrink: 0; font-size: 12px; font-weight: 800;
+    color: var(--ink-3); font-variant-numeric: tabular-nums;
+    padding: 4px 8px; border-radius: 6px;
+    background: var(--bg-soft);
+  }
+  .card-item .info { flex: 1; min-width: 0; }
+  .card-item .cat {
+    display: inline-block; font-size: 11.5px; font-weight: 700;
+    padding: 2px 8px; border-radius: 6px;
+    background: var(--accent-soft); color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .card-item .title {
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    margin-bottom: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-item .summary {
+    font-size: 13px; color: var(--ink-2);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .empty-list {
+    padding: 60px 20px; text-align: center;
+    font-size: 14px; color: var(--ink-3);
+  }
+
+  .pager {
+    display: flex; justify-content: center; gap: 6px;
+    margin-top: 24px; flex-wrap: wrap;
+  }
+  .pager button {
+    min-width: 36px; height: 36px; padding: 0 10px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink-2);
+    font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .pager button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .pager button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pager button:disabled { opacity: .35; cursor: not-allowed; }
+  .pager .info { padding: 0 12px; font-size: 12.5px; color: var(--ink-3); align-self: center; }
+
+  /* ============ 隐藏 ============ */
+  .hidden { display: none !important; }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 720px) {
+    .main { padding: 22px 16px 60px; }
+    .top-inner { padding: 12px 16px; }
+    .brand-sub { display: none; }
+    .form-wrap { padding: 22px 18px; }
+    .field-row { flex-direction: column; gap: 0; }
+    .field-row .field { margin-bottom: 22px; }
+    .point-row { padding: 12px; }
+    .card-item { padding: 14px; flex-wrap: wrap; }
+    .card-item .actions { width: 100%; justify-content: flex-end; }
+    .login-card { padding: 28px 22px; margin: 40px auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">方</span>
+      <span>方塘后台</span>
+      <span class="brand-sub">卡片管理</span>
+    </a>
+    <div class="top-actions">
+      <a class="link-btn" href="/">← 回主页</a>
+      <button class="link-btn" id="logoutBtn" style="display:none">退出</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- 登录卡 -->
+  <div class="login-card" id="loginCard">
+    <h2>请输入密码</h2>
+    <p>只有你能访问这个页面</p>
+    <input type="password" id="pwInput" placeholder="管理密码" autocomplete="current-password">
+    <button id="loginBtn">进入后台</button>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
+
+  <!-- 后台主体 -->
+  <div id="adminMain" class="hidden">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="add">新增卡片</button>
+      <button class="tab" data-tab="list">管理卡片</button>
+    </div>
+
+    <!-- ============ 新增 / 编辑 ============ -->
+    <section id="tabAdd">
+      <div class="form-wrap">
+        <form id="cardForm">
+          <input type="hidden" id="editId" value="">
+
+          <div class="field">
+            <label>标题<span class="req">*</span></label>
+            <input type="text" id="fTitle" maxlength="200" placeholder="比如：国有资产保值增值" required>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>分类<span class="req">*</span></label>
+              <input type="text" id="fCategory" list="categoryOptions" maxlength="30" placeholder="比如：资产运营" required>
+              <datalist id="categoryOptions"></datalist>
+              <div class="hint">可从下拉中选择已有分类，也可直接输入新分类</div>
+            </div>
+            <div class="field" style="max-width:140px">
+              <label>阅读时长</label>
+              <input type="number" id="fReadMin" min="1" max="30" value="3">
+              <div class="hint">分钟</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>摘要<span class="req">*</span></label>
+            <textarea id="fSummary" maxlength="500" placeholder="一到两句话概括这张卡片的核心" required></textarea>
+          </div>
+
+          <div class="field">
+            <label>金句</label>
+            <input type="text" id="fQuote" maxlength="200" placeholder="可选，一句点题的话">
+          </div>
+
+          <div class="field">
+            <label>核心要点</label>
+            <div class="points-list" id="pointsList"></div>
+            <button type="button" class="btn-mini" id="addPointBtn" style="margin-top:10px">+ 添加一条要点</button>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="saveBtn">保存</button>
+            <button type="button" class="btn-secondary" id="cancelEditBtn" style="display:none">取消编辑</button>
+            <span class="form-msg" id="formMsg"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ 管理列表 ============ -->
+    <section id="tabList" class="hidden">
+      <div class="list-toolbar">
+        <input type="text" id="searchInput" placeholder="搜索标题、摘要、金句…">
+        <select id="categoryFilter"><option value="全部">全部分类</option></select>
+        <button class="btn-secondary" id="reloadBtn">刷新</button>
+      </div>
+      <div class="card-list" id="cardList"></div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+/* =========================================================
+   配置
+   ========================================================= */
+const API_BASE = '';
+const SECTION_ID = 'sec_business';
+const PAGE_SIZE = 50;
+
+/* =========================================================
+   状态
+   ========================================================= */
+let TOKEN = localStorage.getItem('ft_admin_token') || '';
+let currentPage = 1;
+let currentList = [];
+let editingId = null;
+
+/* =========================================================
+   DOM
+   ========================================================= */
+const loginCard   = document.getElementById('loginCard');
+const adminMain   = document.getElementById('adminMain');
+const pwInput     = document.getElementById('pwInput');
+const loginBtn    = document.getElementById('loginBtn');
+const loginMsg    = document.getElementById('loginMsg');
+const logoutBtn   = document.getElementById('logoutBtn');
+
+const tabs        = document.querySelectorAll('.tab');
+const tabAdd      = document.getElementById('tabAdd');
+const tabList     = document.getElementById('tabList');
+
+const cardForm    = document.getElementById('cardForm');
+const editIdInput = document.getElementById('editId');
+const fTitle      = document.getElementById('fTitle');
+const fCategory   = document.getElementById('fCategory');
+const fReadMin    = document.getElementById('fReadMin');
+const fSummary    = document.getElementById('fSummary');
+const fQuote      = document.getElementById('fQuote');
+const pointsList  = document.getElementById('pointsList');
+const addPointBtn = document.getElementById('addPointBtn');
+const saveBtn     = document.getElementById('saveBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const formMsg     = document.getElementById('formMsg');
+const categoryOptions = document.getElementById('categoryOptions');
+
+const searchInput    = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const reloadBtn      = document.getElementById('reloadBtn');
+const cardList       = document.getElementById('cardList');
+const pager          = document.getElementById('pager');
+
+/* =========================================================
+   API 封装
+   ========================================================= */
+async function api(path, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Admin-Token': TOKEN,
+    ...(options.headers || {})
+  };
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+
+/* =========================================================
+   登录流程
+   ========================================================= */
+async function tryEnter(token) {
+  TOKEN = token;
+  try {
+    await api('/api/cards?page_size=1');
+    localStorage.setItem('ft_admin_token', token);
+    showAdmin();
+    return true;
+  } catch (e) {
+    localStorage.removeItem('ft_admin_token');
+    TOKEN = '';
+    loginMsg.textContent = e.message || '验证失败';
+    loginMsg.className = 'login-msg err';
+    return false;
+  }
+}
+
+function showAdmin() {
+  loginCard.classList.add('hidden');
+  adminMain.classList.remove('hidden');
+  logoutBtn.style.display = 'inline-flex';
+  initPointsRow();
+  loadCategories();
+  loadList(1);
+}
+
+function showLogin() {
+  loginCard.classList.remove('hidden');
+  adminMain.classList.add('hidden');
+  logoutBtn.style.display = 'none';
+  pwInput.value = '';
+  pwInput.focus();
+}
+
+loginBtn.addEventListener('click', async () => {
+  const v = pwInput.value.trim();
+  if (!v) { loginMsg.textContent = '请输入密码'; loginMsg.className = 'login-msg err'; return; }
+  loginBtn.disabled = true;
+  loginBtn.textContent = '验证中…';
+  loginMsg.textContent = '';
+  await tryEnter(v);
+  loginBtn.disabled = false;
+  loginBtn.textContent = '进入后台';
+});
+
+pwInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') loginBtn.click();
+});
+
+logoutBtn.addEventListener('click', () => {
+  localStorage.removeItem('ft_admin_token');
+  TOKEN = '';
+  showLogin();
+});
+
+/* 页面加载时若已有 token，自动尝试进入 */
+if (TOKEN) {
+  tryEnter(TOKEN);
+} else {
+  showLogin();
+}
+
+/* =========================================================
+   标签切换
+   ========================================================= */
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    const tab = t.dataset.tab;
+    tabs.forEach(x => x.classList.toggle('active', x === t));
+    tabAdd.classList.toggle('hidden', tab !== 'add');
+    tabList.classList.toggle('hidden', tab !== 'list');
+    if (tab === 'list') loadList(currentPage);
+  });
+});
+
+/* =========================================================
+   要点行：添加 / 删除 / 读取
+   ========================================================= */
+function renumberPoints() {
+  const rows = pointsList.querySelectorAll('.point-row');
+  rows.forEach((row, i) => {
+    row.querySelector('.num').textContent = i + 1;
+  });
+}
+
+function initPointsRow(t, d) {
+  if (pointsList.children.length === 0) {
+    addPointRow('', '');
+  } else if (t !== undefined) {
+    addPointRow(t, d);
+  }
+  renumberPoints();
+}
+
+function addPointRow(t, d) {
+  const row = document.createElement('div');
+  row.className = 'point-row';
+  row.innerHTML = `
+    <span class="num"></span>
+    <div class="body">
+      <input type="text" class="point-t" maxlength="50" placeholder="小标题，比如：保值底线" value="${escapeAttr(t)}">
+      <textarea class="point-d" maxlength="300" placeholder="描述">${escapeHtml(d)}</textarea>
+    </div>
+    <button type="button" class="point-remove" aria-label="删除">×</button>
+  `;
+  row.querySelector('.point-remove').addEventListener('click', () => {
+    row.remove();
+    if (pointsList.children.length === 0) addPointRow('', '');
+    renumberPoints();
+  });
+  pointsList.appendChild(row);
+  renumberPoints();
+}
+
+addPointBtn.addEventListener('click', () => addPointRow('', ''));
+
+function readPoints() {
+  const rows = pointsList.querySelectorAll('.point-row');
+  const arr = [];
+  rows.forEach(row => {
+    const t = row.querySelector('.point-t').value.trim();
+    const d = row.querySelector('.point-d').value.trim();
+    if (t || d) arr.push({ t, d });
+  });
+  return arr;
+}
+
+function clearPoints() {
+  pointsList.innerHTML = '';
+  addPointRow('', '');
+}
+
+/* =========================================================
+   分类下拉：读取已有分类
+   ========================================================= */
+async function loadCategories() {
+  try {
+    const data = await api(`/api/cards?section_id=${encodeURIComponent(SECTION_ID)}&page_size=100`);
+    const cats = ['全部', ...new Set((data.cards || []).map(c => c.category).filter(Boolean))];
+
+    /* 更新 datalist */
+    categoryOptions.innerHTML = cats
+      .filter(c => c !== '全部')
+      .map(c => `<option value="${escapeAttr(c)}"></option>`)
+      .join('');
+
+    /* 更新筛选下拉 */
+    const current = categoryFilter.value || '全部';
+    categoryFilter.innerHTML = cats.map(c =>
+      `<option value="${escapeAttr(c)}"${c === current ? ' selected' : ''}>${escapeHtml(c)}</option>`
+    ).join('');
+  } catch (e) {
+    /* 忽略 */
+  }
+}
+
+/* =========================================================
+   提交表单（新增或修改）
+   ========================================================= */
+cardForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  formMsg.textContent = '';
+  formMsg.className = 'form-msg';
+
+  const title = fTitle.value.trim();
+  const category = fCategory.value.trim();
+  const summary = fSummary.value.trim();
+  const quote = fQuote.value.trim();
+  const readMin = Number(fReadMin.value) || 3;
+  const points = readPoints();
+
+  if (!title) { formMsg.textContent = '标题不能为空'; formMsg.className = 'form-msg err'; return; }
+  if (!category) { formMsg.textContent = '分类不能为空'; formMsg.className = 'form-msg err'; return; }
+  if (!summary) { formMsg.textContent = '摘要不能为空'; formMsg.className = 'form-msg err'; return; }
+  if (points.length === 0) { formMsg.textContent = '至少填写一条核心要点'; formMsg.className = 'form-msg err'; return; }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = '保存中…';
+
+  try {
+    if (editingId) {
+      await api('/api/cards/' + editingId, {
+        method: 'PUT',
+        body: JSON.stringify({ category, read_min: readMin, title, summary, quote, points })
+      });
+      formMsg.textContent = '修改成功';
+      formMsg.className = 'form-msg ok';
+      exitEditMode();
+      loadList(currentPage);
+    } else {
+      const data = await api('/api/cards', {
+        method: 'POST',
+        body: JSON.stringify({
+          section_id: SECTION_ID,
+          category, read_min: readMin, title, summary, quote, points
+        })
+      });
+      formMsg.textContent = `保存成功，编号 ${data.no}`;
+      formMsg.className = 'form-msg ok';
+      resetForm();
+    }
+    loadCategories();
+  } catch (err) {
+    formMsg.textContent = '失败：' + err.message;
+    formMsg.className = 'form-msg err';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = '保存';
+  }
+});
+
+function resetForm() {
+  fTitle.value = '';
+  fSummary.value = '';
+  fQuote.value = '';
+  fReadMin.value = 3;
+  /* 保留分类，便于连续录入同一分类 */
+  clearPoints();
+  fTitle.focus();
+}
+
+function exitEditMode() {
+  editingId = null;
+  editIdInput.value = '';
+  saveBtn.textContent = '保存';
+  cancelEditBtn.style.display = 'none';
+  resetForm();
+}
+
+cancelEditBtn.addEventListener('click', () => {
+  exitEditMode();
+  formMsg.textContent = '';
+});
+
+/* =========================================================
+   加载列表
+   ========================================================= */
+async function loadList(page) {
+  currentPage = page;
+  cardList.innerHTML = '<div class="empty-list">加载中…</div>';
+  pager.innerHTML = '';
+
+  try {
+    const q = searchInput.value.trim();
+    const cat = categoryFilter.value || '全部';
+    const params = new URLSearchParams({
+      section_id: SECTION_ID,
+      page: String(page),
+      page_size: String(PAGE_SIZE)
+    });
+    if (q) params.set('q', q);
+    if (cat && cat !== '全部') params.set('category', cat);
+
+    const data = await api('/api/cards?' + params.toString());
+    currentList = data.cards || [];
+
+    if (currentList.length === 0) {
+      cardList.innerHTML = '<div class="empty-list">没有找到卡片</div>';
+      return;
+    }
+
+    cardList.innerHTML = currentList.map(c => `
+      <div class="card-item" data-id="${c.id}">
+        <span class="no">NO.${String(c.no).padStart(3, '0')}</span>
+        <div class="info">
+          <span class="cat">${escapeHtml(c.category)}</span>
+          <div class="title">${escapeHtml(c.title)}</div>
+          <div class="summary">${escapeHtml(c.summary)}</div>
+        </div>
+        <div class="actions">
+          <button class="btn-mini" data-action="edit">编辑</button>
+          <button class="btn-mini danger" data-action="delete">删除</button>
+        </div>
+      </div>
+    `).join('');
+
+    renderPager(data.page, data.totalPages, data.total);
+  } catch (e) {
+    cardList.innerHTML = `<div class="empty-list">加载失败：${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderPager(page, totalPages, total) {
+  if (totalPages <= 1) {
+    pager.innerHTML = `<span class="info">共 ${total} 条</span>`;
+    return;
+  }
+  const pages = getPageNumbers(page, totalPages);
+  let html = `<button data-page="prev" ${page === 1 ? 'disabled' : ''}>上一页</button>`;
+  pages.forEach(p => {
+    if (p === '...') html += `<span class="info">…</span>`;
+    else html += `<button data-page="${p}" class="${p === page ? 'active' : ''}">${p}</button>`;
+  });
+  html += `<button data-page="next" ${page === totalPages ? 'disabled' : ''}>下一页</button>`;
+  html += `<span class="info">共 ${total} 条 · ${page}/${totalPages}</span>`;
+  pager.innerHTML = html;
+}
+
+function getPageNumbers(current, total) {
+  const delta = 1;
+  const range = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+      range.push(i);
+    } else if (range[range.length - 1] !== '...') {
+      range.push('...');
+    }
+  }
+  return range;
+}
+
+/* 分页点击 */
+pager.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-page]');
+  if (!btn || btn.disabled) return;
+  const p = btn.dataset.page;
+  if (p === 'prev') loadList(currentPage - 1);
+  else if (p === 'next') loadList(currentPage + 1);
+  else loadList(Number(p));
+});
+
+/* 列表按钮：编辑 / 删除 */
+cardList.addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const item = btn.closest('.card-item');
+  const id = item.dataset.id;
+
+  if (btn.dataset.action === 'edit') {
+    try {
+      const data = await api('/api/cards/' + id);
+      const c = data.card;
+      editingId = c.id;
+      editIdInput.value = c.id;
+      fTitle.value = c.title;
+      fCategory.value = c.category;
+      fReadMin.value = c.readMin;
+      fSummary.value = c.summary;
+      fQuote.value = c.quote || '';
+      pointsList.innerHTML = '';
+      const pts = Array.isArray(c.points) ? c.points : [];
+      if (pts.length === 0) addPointRow('', '');
+      else pts.forEach(p => addPointRow(p.t || '', p.d || ''));
+      renumberPoints();
+      saveBtn.textContent = '保存修改';
+      cancelEditBtn.style.display = 'inline-block';
+      formMsg.textContent = '';
+      /* 切到新增标签 */
+      tabs.forEach(x => x.classList.toggle('active', x.dataset.tab === 'add'));
+      tabAdd.classList.remove('hidden');
+      tabList.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      alert('读取失败：' + err.message);
+    }
+  }
+
+  if (btn.dataset.action === 'delete') {
+    const title = item.querySelector('.title').textContent;
+    if (!confirm(`确定删除「${title}」吗？\n删除后不可恢复。`)) return;
+    try {
+      await api('/api/cards/' + id, { method: 'DELETE' });
+      loadList(currentPage);
+    } catch (err) {
+      alert('删除失败：' + err.message);
+    }
+  }
+});
+
+/* 搜索 / 筛选 */
+let searchTimer = null;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadList(1), 300);
+});
+categoryFilter.addEventListener('change', () => loadList(1));
+reloadBtn.addEventListener('click', () => loadList(currentPage));
+
+/* =========================================================
+   工具
+   ========================================================= */
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function escapeAttr(s) {
+  return escapeHtml(s);
+}
+</script>
+</body>
+</html>
