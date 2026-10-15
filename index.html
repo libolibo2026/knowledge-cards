@@ -441,10 +441,32 @@
   }
 
   /* ============ 回到顶部 ============ */
-  .back-to-top {
+    /* ============ 新增卡片按钮 ============ */
+  .add-card-btn {
     position: fixed;
     right: 24px;
     bottom: 28px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--shadow-card);
+    z-index: 91;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .add-card-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+  }
+  .back-to-top {
+    position: fixed;
+    right: 24px;
+    bottom: 90px;
     width: 46px;
     height: 46px;
     border-radius: 50%;
@@ -648,12 +670,13 @@
     .pagination { padding: 0 20px 60px; gap: 4px; }
     .page-btn { min-width: 34px; height: 34px; padding: 0 8px; font-size: 13px; }
     .page-info { font-size: 12px; padding: 0 6px; }
-    .back-to-top { right: 16px; bottom: 20px; width: 42px; height: 42px; }
+    .back-to-top { right: 16px; bottom: 76px; width: 42px; height: 42px; }
     .modal-body { padding: 36px 22px 26px; }
     .m-quote { font-size: 15px; padding: 14px 18px; }
     .card { min-height: 236px; }
     .modal-top-btn { right: 16px; bottom: 20px; width: 42px; height: 42px; }
     .hero h1 { white-space: nowrap; }
+    .add-card-btn { right: 16px; bottom: 20px; width: 46px; height: 46px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -749,7 +772,12 @@
 </footer>
 
 <!-- 回到顶部 -->
-<button class="back-to-top" id="backToTop" aria-label="回到顶部">
+<a class="add-card-btn" href="/admin.html" title="新增卡片" aria-label="新增卡片">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+</a>
+  <button class="back-to-top" id="backToTop" aria-label="回到顶部">
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 19V5M5 12l7-7 7 7"/>
   </svg>
